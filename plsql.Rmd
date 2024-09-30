@@ -1,0 +1,2037 @@
+---
+title: "Oracle PLSQL"
+autor : Johnys Cárdenas Herrera
+lang: es
+output:
+  
+  html_document: 
+    toc : true # menu
+    toc_depth : 2 # profundidad menu
+    toc_float : true #menu flotante
+    number_sections : true # Numero secciones
+    df_print : paged #impresion de tablas
+    code_folding: show # hide,show msotrar o ocultar codigo
+    css: C:/Users/jcardenash/Documents/R/ejercicios/css/css_rmarkdown.css
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+![](https://raw.githubusercontent.com/jcardenashh/img/refs/heads/main/plsql2.webp){height='500px'}
+
+# Prefacio
+
+
+
+Apuntes personales de PLSQL en proceso, pensados en un enfoque pedagógico, todo comentario es bienvenido.
+
+Como actuario, mi trabajo diario se basa en el análisis y la manipulación de grandes volúmenes de datos. En este proceso, PL/SQL ha sido una herramienta indispensable para gestionar, organizar y extraer información valiosa de bases de datos. Estas notas surge de mi necesidad de optimizar tareas repetitivas, simplificar consultas complejas y tener a la mano soluciones que agilicen el tratamiento de datos.
+
+Estas entradas reflejan tanto mi experiencia en el ámbito actuarial como las lecciones aprendidas al enfrentar problemas reales en la gestión de bases de datos.
+
+Este espacio está diseñado para ser un recurso práctico, donde guardo mis mejores prácticas y soluciones a problemas comunes en el manejo de datos. Cada entrada está orientada a resolver desafíos específicos del análisis actuarial y del mundo de los datos, desde cálculos complejos hasta la automatización de procesos.
+
+Al compartir estas notas, espero que no solo me sirvan como una referencia para futuras tareas, sino también como una guía útil para cualquier profesional que, como yo, trabaje con el análisis intensivo de datos y la programación en PL/SQL.
+
+
+
+# Introducción {.card-2}
+
+PL/SQL (Procedural Language/Structured Query Language) es un lenguaje de programación diseñado específicamente para la administración de bases de datos relacionales de Oracle. Oracle Corporation desarrolló PL/SQL como una extensión del lenguaje de consulta SQL estándar con elementos de programación procedural.
+
+PL/SQL se utiliza comúnmente para desarrollar aplicaciones empresariales que requieren una estrecha integración con bases de datos Oracle. Los desarrolladores pueden escribir código PL/SQL para realizar operaciones complejas en la base de datos, mejorar el rendimiento de las consultas, y automatizar tareas de administración y mantenimiento.
+
+Algunos temas que despetaron especial interes para lograr un nivel avanzado en el analisis de los datos con sql son:, los CTE, funciones de ventana, y las consultas pivot.
+
+# Bloques anonimos {.card-2}
+
+Los bloques de PL/SQL pueden ser de los siguientes tipos:
+
+-   Bloques anónimos se construyen de forma dinámica y no se almacenan en la base de datos
+
+-   Subprogramas. son bloques nominados se almacenan en la base de datos. Podemos encontrar **procedimientos almacenados, funciones,paquetes**, siempre se ejecutan bajo demanda. Adicional tenemos los **disparadores** que se ejecutan bajo un evento.
+
+
+Los programas de PL/SQL está compuesto por diferentes  bloques, como mínimo y obligatoriamente el bloque **BEGIN END**.
+
+Un bloque PL/SQL consta de tres partes principales: Declarativas, Ejecutables y de Excepciones.
+
+**Declarativas: DECLARE** Se utilizan para declarar variables, constantes, cursores, tipos de datos personalizados, etc.
+
+**Ejecutables: BEGIN** Contienen el código ejecutable que realiza operaciones como manipulación de datos, control de flujo, etc.
+
+**Excepciones: EXCEPTION** Se utilizan para manejar errores y situaciones excepcionales.
+
+```{plsql}
+-- bloque anonimo no se almacena en la base de datos
+DECLARE
+   -- bloque declarativo de variables y constantes
+   variable NUMBER;
+BEGIN
+   --  Bloque Ejecutable el unico obligatorio
+   variable := 10;
+   DBMS_OUTPUT.PUT_LINE('El valor de la variable es ' || variable);
+EXCEPTION
+   -- Bloque de manejo de errores "Excepciones"
+   WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE('Se produjo un error: ' || SQLERRM);
+END; -- final del programa
+
+```
+
+De las anteriores partes, únicamente **la sección de ejecución es obligatoria** , que quedaría delimitada entre las cláusulas **BEGIN y END** . Veamos un ejemplo de bloque PL/SQL muy genérico. Se trata de un bloque anónimo, es decir, no lo identifica ningún nombre. Los bloques anónimos identifican su parte declarativa con la palabra reservada DECLARE.
+
+# Salida en pantalla de los resultados {.card-2}
+
+**SET SERVEROUTPUT ON**; Esta función activa la salida del servidor
+
+Se debe ejecutar siempre que se inicie una nueva sesión.
+
+```{plsql}
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+  v_variable VARCHAR2(100);
+BEGIN
+  v_variable := 'Hola, mundo!';
+  DBMS_OUTPUT.PUT_LINE(v_variable);
+END;
+/
+```
+
+# Tipos de datos {.tabset .tabset-fade .tabset-pills .card-2}
+
+PL/SQL admite tipos de datos estándar como enteros, caracteres, fechas, etc. Además, permite definir tipos de datos personalizados (registros, tablas) para estructurar y organizar la información de manera más eficiente.
+
+## Tipos numéricos
+
+PL/SQL ofrece una variedad de tipos de datos numéricos para almacenar valores enteros y decimales. Los tipos más comunes son:
+
+### Números enteros
+
+-   **NUMBER**: Es el tipo de dato más versátil, puede almacenar valores enteros positivos, negativos y cero. Se define con NUMBER(p,s), **salario number(10,6)**  donde:**p** indica la precisión total (dígitos); de 1 a 38; **s** indica la escala (dígitos decimales); de -84 a 127
+
+-   **SMALLINT**: Almacena enteros entre -32768 y 32767.
+
+-   **INT**
+
+-   **INTEGER:** Almacena enteros entre -2147483648 y 2147483647. Tipo ANSI que equivale a un tipo number(38)
+
+-   **BIGINT**: Almacena enteros entre -9223372036854775808 y 9223372036854775807.
+
+-   **NUMERIC**:
+
+-   **PLS_INTEGER**: Almacena enteros enre -2147483648 y 2147483647
+
+### Números decimales
+
+-   **FLOAT**: Almacena valores decimales de precisión simple (7 mdígitos).
+-   **DOUBLE**: Almacena valores decimales de precisión doble (15 dígitos).
+-   **BINARY_FLOAT**: Almacena valores decimales de precisión simple usando formato binario, 64 bits.
+-   **BINARY_DOUBLE**: Almacena valores decimales de precisión doble usando formato binario, 32 bits.
+-   **DEC** :\
+-   **DECIMAL**
+
+### Consideraciones
+
+-La precisión y la escala afectan el rango de valores que se pueden almacenar. - Los tipos de datos FLOAT y DOUBLE son aproximados, no exactos. - Se recomienda usar NUMBER para mayor precisión y flexibilidad.
+
+## Tipos Carácter
+
+-   **CHAR:** *v_nombre CHAR(20)* Almacena una cadena de longitud fija (máximo 32767 bytes).La longitud se define al declarar la variable. Rellena con espacios en blanco si la cadena es más corta.
+
+-   **VARCHAR2** *v_nombre VARCHAR2(20);* Almacena una cadena delongitud variable (máximo 4000 bytes o caracteres y un tamaño minimo de 1). Solo se utiliza el espacio necesario para la cadena. **Más eficiente que CHAR para cadenas de longitud variable**.
+
+-   **VARCHAR:** Similar a VARCHAR2, pero sin límite de longitud (depende del tamaño de bloque). No se recomienda su uso por la complejidad de gestión de memoria.
+
+-   **NCHAR:** Almacena caracteres Unicode de longitud fija. Útil para datos internacionales con caracteres especiale
+
+-   **NVARCHAR2:** Almacena caracteres Unicode de longitud variable. Similar a **VARCHAR2** pero con soporte para Unicode.
+
+-   **LONG y LONG RAW:** Almacenan cadenas de longitud superior a 4000 bytes. LONG para texto, LONG RAW para binarios. Se utilizan para almacenar grandes cantidades de datos textuales o binarios
+
+### Consideraciones
+
+-   Elegir el tipo de dato adecuado según la longitud y tipo de caracteres.
+-   VARCHAR2 es la opción más versátil para la mayoría de casos.
+-   NCHAR y NVARCHAR2 son necesarios para datos internacionales.
+-   LONG y LONG RAW se usan para grandes cantidades de datos.
+
+## Tipos Booleanos
+
+## Tipos de fecha y hora
+
+-   **DATE:**
+
+-   **TIME:**
+
+-   **TIMESTAMP:**
+
+-   **TIMESTAMP WITH TIME ZONE:**
+
+-   **TIMESTAMP WITH LOCAL ZONE:**
+
+-   **INTERVAL YEAR TO MOTH:**
+
+-   **INTERVAL DAY TO SECOND:**
+
+## Tipos Raw
+
+-   **RAW**: Almacena datos binarios tamaño máximo de 2000 bytes.
+-   **LONG RAW**: Almacena grandes cantidades de datos binarios tamaño máximo de 2 gigabytes.
+
+### Caracteristicas
+
+-   Útiles para almacenar imágenes, archivos, etc.
+-   Se pueden usar para almacenar cualquier tipo de dato binario.
+-   No se pueden comparar directamente.
+-   Se deben usar funciones específicas para trabajar con ellos.
+
+### Funciones para trabajar con datos RAW:
+
+-   DBMS_LOB.WRITE: Escribe datos en un LOB (Large Object).
+-   DBMS_LOB.READ: Lee datos de un LOB.
+-   SUBSTR: Extrae una subcadena de un dato RAW.
+-   LENGTH: Obtiene la longitud de un dato RAW.
+
+```{plsql}
+
+DECLARE
+  v_imagen RAW(2000);
+BEGIN
+  -- Leer imagen desde un archivo
+  DBMS_LOB.OPEN(v_imagen, 'IMAGE.JPG');
+  DBMS_LOB.READ(v_imagen, 1, 2000);
+  DBMS_LOB.CLOSE(v_imagen);
+
+  -- Guardar imagen en la base de datos
+  INSERT INTO BLOBS (ID, IMAGEN) VALUES (1, v_imagen);
+END;
+
+```
+
+### consideraciones
+
+-   Los tipos de datos RAW son más complejos que los tipos de datos de carácter.
+-   Se debe tener cuidado al trabajar con ellos para evitar errores.
+-   Se recomienda usar herramientas de desarrollo que brinden soporte mpara estos tipos de datos.
+
+## Tipos Rowind
+
+## Tipos UROWIND
+
+## Tipos compuestos
+
+En PL/SQL, un lenguaje de programación de base de datos de Oracle, los tipos de datos compuestos permiten a los programadores definir variables que pueden almacenar múltiples valores o datos más complejos. Estos tipos son especialmente útiles para manipular conjuntos de datos directamente en procedimientos almacenados, funciones y paquetes, ofreciendo una forma más estructurada y eficiente de gestionar la información. Los principales tipos de datos
+
+-   RECORD
+-   COLLECTION
+-   TABLE
+-   VARRAY
+-   OBJECT
+
+Cada uno de estos tipos de datos compuestos tiene sus propios casos de uso y limitaciones. Elegir el adecuado depende de las necesidades específicas de la tarea que estés tratando de realizar en PL/SQL.
+
+### RECORD
+
+Son tipos de datos compuestos que permiten combinar diferentes tipos de datos en una sola estructura, similar a las estructuras en C o los objetos en lenguajes orientados a objetos. Cada componente del registro puede ser de un tipo de dato diferente, y se accede a cada uno mediante
+un nombre. Los registros son especialmente útiles cuando se necesita trabajar con filas de una tabla o vista individualmente.
+
+```{PLSQL}
+DECLARE
+   TYPE t_empleado IS RECORD (
+      id_empleado NUMBER,
+      nombre VARCHAR2(100),
+      salario NUMBER
+   );
+   v_empleado t_empleado;
+BEGIN
+   v_empleado.id_empleado := 101;
+   v_empleado.id_empleado := 'Juan Pérez';
+   v_empleado.id_empleado := 3000;
+   
+  DBMS_OUTPUT.PUT_LINE('Nombre: ' || v_empleado.id_empleado);
+  DBMS_OUTPUT.PUT_LINE('Apellido: ' || v_empleado.id_empleado);
+  DBMS_OUTPUT.PUT_LINE('Edad: ' || v_empleado.id_empleado);
+   
+END;
+```
+
+### Colecciones
+
+Las colecciones son tipos de datos que permiten almacenar conjuntos de elementos, similares a los arrays en otros lenguajes de programación, pero con características adicionales. PL/SQL ofrece tres tipos de colecciones:
+
+#### Asociative Arrays (anteriormente conocidos como "INDEX BY tables")
+
+Son arreglos que se indexan usando un tipo de dato específico, no necesariamente secuencias numéricas. Permiten una búsqueda rápida de elementos y son útiles para colecciones temporales que existen solo durante la ejecución de un bloque PL/SQL.
+
+```{plsql}
+DECLARE
+   TYPE t_nombre_empleado IS TABLE OF VARCHAR2(100) INDEX BY PLS_INTEGER;
+   v_nombres t_nombre_empleado;
+BEGIN
+   v_nombres(1) := 'Juan Pérez';
+   v_nombres(2) := 'María López';
+   -- Acceso a los elementos aquí
+END;
+```
+
+#### Varrays (Variable-Size Arrays)
+
+Los varrays tienen un tamaño máximo definido y son útiles cuando el número máximo de elementos es conocido. A diferencia de los associative arrays, los varrays mantienen un orden específico de los elementos.
+
+```{plsql}
+
+DECLARE
+   TYPE t_numeros_telefono IS VARRAY(10) OF VARCHAR2(15);
+   v_telefonos t_numeros_telefono;
+BEGIN
+   v_telefonos := t_numeros_telefono();
+   v_telefonos.EXTEND(2);
+   v_telefonos(1) := '555-1234';
+   v_telefonos(2) := '555-5678';
+   -- Procesamiento adicional aquí
+END;
+```
+
+#### Tablas anidadas
+
+Las tablas anidadas permiten definir un conjunto de elementos que pueden ser de tamaño dinámico, pero, a diferencia de los varrays, no mantienen un orden específico y permiten la eliminación de elementos individuales, lo que puede hacer que el conjunto tenga huecos.
+
+-   Permiten almacenar una colección de registros del mismo tipo.
+-   Se definen con la palabra clave TABLE OF.
+-   Útiles para almacenar conjuntos de datos relacionados.
+
+```{plsql}
+DECLARE
+   TYPE t_lista_empleados IS TABLE OF VARCHAR2(100);
+   v_empleados t_lista_empleados;
+BEGIN
+   v_empleados := t_lista_empleados('Juan Pérez', 'María López', 'Luis González');
+   -- Procesamiento adicional aquí
+END;
+
+```
+
+## Tipos Punteros
+
+Los tipos punteros se utilizan para referenciar a cursores en memoria o tipos de objetos, se distinguen los siguientes:
+
+-   **REF CURSOR**
+-   **REF tipo objeto**
+
+## Tipos LOB
+
+Permiten referenicas a ficheros de gran tamaño almacenados externamente a la base de datos, pero referenciados desde la misma, y se distinguen los siguientes tipos:
+
+-   **BFILE** para almacenar datos binarios en archivos externos al sistema de base de datos.
+-   **BLOB** para almacenar datos binarios.
+-   **CLOB** para almacenar datos de caracteres.
+-   **NLOB** para almacenar datos de caracteres Unicode.
+
+**Ejemplos de uso:**
+
+-   Almacenamiento de imágenes de productos en una tienda online.
+-   Almacenamiento de documentos legales en un sistema de gestión documental.
+-   Almacenamiento de archivos de audio y video en un sistema de entretenimiento multimedia.
+
+# Variables y constantes {.card-2}
+
+En PL/SQL se pueden declarar tanto **constantes como variables**; recordemos que las variables pueden cambiar en tiempo de ejecución, mientras que las constantes permanecen con el mismo valor de forma continua.
+
+Se declararán como constantes aquellas variables que no vayan a cambiar durante la ejecución. De este modo facilitaremos la interpretación del código y eliminaremos posibles errores.
+
+Se pueden declarar constantes y variables en la parte de declaración de cualquier bloque PL/SQL, subprograma, o package. Las declaraciones reservan espacio para un valor en función de su tipo.
+
+Al hacer la declaración, daremos un nombre a la variable o constante, para de esta forma poder referenciarla a lo largo de la ejecución del Programa.
+
+La declaracion de variables se realiza en sección **Declare** de un bloque
+
+```{plsql}
+
+Sintaxis
+
+<nombre_variable> tipo [constant tipo / default] [not null] [:=valor]
+
+Asignacion de valor
+
+<variable> := <valor>;
+ 
+Ejemplos
+Declare 
+
+  Cumple DATE; 
+  Cuenta SMALLINT := 0;
+  var3 number(5) not null :=0;
+  var4 CONSTANT varchar2(10) := 'plsql';
+  var5 number default 45;
+  var6 interval YEAR (3) to MOTH;
+
+BEGIN
+Null
+END;
+```
+
+Como vemos, al declarar una variable o constante, podemos darle un valor inicial. Incluso podemos asignarle expresiones, como en el siguiente ejemplo:
+
+```{plsql}
+pi REAL := 3.14159; 
+radio REAL := 1; 
+area REAL := pi*radio*2;
+```
+
+Cuando declaremos una constante, la palabra clave CONSTANT debe preceder a la especificación del tipo
+
+```{plsql}
+limite_de_credito CONSTANT REAL := 250.000; 
+```
+
+Debemos asegurar que la inicialización lógica de la variable compleja se realiza al comienzo de la sección ejecutable y que no eleva un error. Si la asignación del valor por defecto se realiza en la sección de mdeclaración y falla, entonces el error se propagará por el programa sin ser encapsulado.
+
+Se recomienda usar variables lógicas y funciones en lugar de expresiones complejas para conseguir un código más legible.
+
+Las variables globales son peligrosas y deben evitarse ya que, al no serpasadas a través de la lista de parámetros, es difícil saber cuándo se utilizan en un programa. Estas variables se suelen definir en paquetes, pero hay que tener en cuenta existirán y conservarán su valor durante toda la sesión.
+
+# Utilizar %TYPE y %ROWTIPE
+
+Cuando se definen variables **basadas en campos de tablas de nuestro modelo de datos** debemos utilizar **%TYPE y %ROWTYPE** como atributos del tipo de datos. Esto se debe a que cualquier cambio en el tipo de un campo de una tabla de nuestro modelo de datos afectará al código fuente si estos atributos no son usados.
+
+## Utilizando %TYPE
+
+El atributo %TYPE, proporciona el tipo de dato de una variable o de una columna de la Bbdd. En el siguiente ejemplo, %TYPE asigna el tipo de dato de una variable:
+
+## utilizando %ROWTYPE
+
+El atributo %ROWTYPE proporciona un tipo 'registro', que representa una fila de una tabla (o una vista). El registro puede almacenar toda la fila de una tabla (o de un cursor sobre esa tabla), o bien una serie de campos recuperados mediante un cursor. Veamos un par de ejemplos que ilustren esto:
+
+# Estructuras de control de flujo {.tabset .tabset-fade .tabset-pills .card-2}
+
+
+En PL/SQL, las estructuras de control permiten tomar decisiones y ejecutar bloques de código **condicionalmente** o de manera **repetitiva.** Las estructuras más comunes son
+
+## IF-THEN-ELSE:
+A menudo, es necesario ejecutar acciones distintas, dependiendo de las ircunstancias. Las sentencias IF, nos permiten ejecutar una secuencia de acciones de forma condicional, es decir, el hecho de que se ejecute o no la acción, depende del valor de la condición.
+
+Hay tres variedades de sentencias 
+- IF: IF-THEN, 
+-IF-THEN-ELSE, 
+- IF-THEN-ELSIF.
+
+
+###  IF: IF-THEN
+Es la forma más sencilla de una sentencia IF. Asocia una secuencia de sentencias a una condición.
+
+
+### IF-THEN-ELSE 
+
+Si la condición es TRUE, se ejecutará la secuencia de instrucciones 1, en caso contrario se ejecutará la 2.
+
+Las claúsulas THEN y ELSE pueden incluir sentencias IF, es decir, podemos agrupar sentencias de tipo IF
+
+### IF-THEN-ELSIF
+
+Como hemos visto, podemos agrupar sentencias de tipo IF… sin embargo, nos podemos encontrar el caso en que existan muchas posibles alternativas a evaluar, y para cada ELSE tendríamos que abrir una sentencia de tipo IF-THEN-ELSE, y cerrarla posteriormente… para 
+evitar esto tenemos la palabra clave ELSIF. 
+
+```{}
+IF condicion1 THEN 
+ secuencia_1; 
+ELSIF condicion2 THEN 
+ secuencia_2; 
+ELSE 
+ secuencia_3; 
+END IF; 
+
+```
+De esta manera, podemos evaluar tantas como queramos, y sólo  deberemos cerrar una sentencia IF con el END IF correspondiente. La  última sentencia ELSE se ejecutará cuando no se cumpla ninguna de las  anteriores, aunque si no queremos ponerla, pues no pasa nada. 
+
+**ejemplo**
+
+Supongamos que estamos verificando si el total de una orden es mayor que 1000 para clasificarla como "Grande", o como "Pequeña" en caso contrario.
+
+```{plsql}
+DECLARE
+    v_order_id orders.order_id%TYPE := 1001;  -- Ejemplo de ID de orden
+    v_order_total orders.order_total%TYPE;
+    v_order_category VARCHAR2(20);
+BEGIN
+    -- Obtenemos el total de la orden
+    SELECT order_total INTO v_order_total FROM orders WHERE order_id = v_order_id;
+
+    -- Estructura de control IF...THEN...ELSE
+    IF v_order_total > 1000 THEN
+        v_order_category := 'Grande';
+    ELSE
+        v_order_category := 'Pequeña';
+    END IF;
+
+    -- Mostrar el resultado
+    DBMS_OUTPUT.PUT_LINE('La orden ' || v_order_id || ' es ' || v_order_category);
+END;
+
+```
+
+
+## CASE
+
+Podemos usar una estructura CASE cuando hay múltiples condiciones que evaluar. 
+
+
+**Supongamos que queremos clasificar las órdenes (orders) en función del monto total de la orden (order_total), asignándoles diferentes categorías.**
+
+```{plsql}
+
+SELECT order_id, order_total,
+       CASE
+           WHEN order_total > 1000 THEN 'Grande'
+           WHEN order_total BETWEEN 500 AND 1000 THEN 'Mediana'
+           WHEN order_total BETWEEN 100 AND 499 THEN 'Pequeña'
+           ELSE 'Muy Pequeña'
+       END AS order_size
+FROM orders;
+
+```
+
+**Supongamos que queremos asignar una clasificación de cliente dependiendo del número de órdenes realizadas.**
+
+```{plsql}
+
+DECLARE
+    v_customer_id customers.customer_id%TYPE := 101;
+    v_total_orders NUMBER;
+    v_customer_category VARCHAR2(20);
+BEGIN
+    -- Obtenemos el número total de órdenes del cliente
+    SELECT COUNT(*)
+    INTO v_total_orders
+    FROM orders
+    WHERE customer_id = v_customer_id;
+
+    -- Usamos CASE para asignar una categoría según el número de órdenes
+    v_customer_category := CASE
+        WHEN v_total_orders > 10 THEN 'Cliente Platino'
+        WHEN v_total_orders > 5 THEN 'Cliente Oro'
+        ELSE 'Cliente Regular'
+    END;
+
+    -- Mostrar el resultado
+    DBMS_OUTPUT.PUT_LINE('El cliente ' || v_customer_id || ' es ' || v_customer_category);
+END;
+
+
+```
+
+
+
+
+
+## BUCLES
+
+Las sentencias de tipo LOOP, permiten ejecutar una secuencia de sentencias múltiples veces
+
+## LOOP
+
+## FOR LOOP
+
+En Oracle, el bucle FOR le permite ejecutar código repetidamente durante un número fijo de veces.
+
+### WHILE LOOP
+
+En Oracle, se utiliza un bucle WHILE cuando no se está seguro de cuántas veces se ejecutará el cuerpo del bucle y es posible que el cuerpo del bucle no se ejecute ni una sola vez.
+
+**Sintaxis**
+
+```{plsql}
+WHILE condition
+
+LOOP
+   sentencias
+END LOOP;
+
+```
+
+
+
+
+### UNTIL LOOP
+
+Oracle no tiene un bucle **UNTIL LOOP**, pero puede emular uno con una instrucción **LOOP**.
+
+
+
+## GOTO
+
+Aunque el uso de GOTO no se recomienda en general debido a sus implicaciones en la legibilidad del código, Oracle PL/SQL lo admite. Sin embargo, es preferible utilizar las estructuras de control mencionadas anteriormente.
+
+
+La sentencia GOTO salta a una etiqueta de forma incondicional; la etiqueta debe ser única en su ámbito, y debe preceder a una sentencia ejecutable, o a un bloque PL/SQL. Cuando se ejecuta, la sentencia GOTO transfiere el control a la sentencia o bloque etiquetados.
+
+
+Supongamos que queremos iterar por una lista de órdenes y cuando encontremos una orden con un total mayor a 1000, queremos saltar a una parte del código para manejar esa situación.
+
+```{plsql}
+
+
+DECLARE
+    v_order_id orders.order_id%TYPE;
+    v_order_total orders.order_total%TYPE;
+    CURSOR cur_orders IS
+        SELECT order_id, order_total FROM orders;
+BEGIN
+    -- Abrimos el cursor para iterar por las órdenes
+    OPEN cur_orders;
+    LOOP
+        FETCH cur_orders INTO v_order_id, v_order_total;
+        EXIT WHEN cur_orders%NOTFOUND;
+
+        -- Si el total de la orden es mayor a 1000, saltamos a la etiqueta "ORDEN_GRANDE"
+        IF v_order_total > 1000 THEN
+            GOTO ORDEN_GRANDE;
+        END IF;
+
+        -- Continuamos con el procesamiento normal de la orden
+        DBMS_OUTPUT.PUT_LINE('Orden ID: ' || v_order_id || ' es menor a 1000');
+        CONTINUE;
+
+        -- Etiqueta a la que saltará el programa si la orden es mayor a 1000
+        <<ORDEN_GRANDE>>
+        DBMS_OUTPUT.PUT_LINE('Orden ID: ' || v_order_id || ' es mayor a 1000. Procesando...');
+
+    END LOOP;
+    CLOSE cur_orders;
+END;
+/
+
+
+```
+
+Aunque el uso de GOTO es permitido en PL/SQL, es mejor reservarlo para situaciones específicas donde no puedas usar otras estructuras de control de flujo.
+
+
+
+
+## Exit
+
+En PL/SQL, la sentencia **EXIT** se utiliza para salir de un **bucle (LOOP, WHILE, FOR)** o de un bloque de código específico. Esta sentencia permite controlar el flujo del programa, saliendo de un bucle cuando se cumple una condición determinada.
+
+La sintaxis es
+
+```         
+EXIT [WHEN boolean_condition];
+```
+
+**boolean_condition** Opcional. Es la condición para terminar el mLOOP.
+
+Ejemplo:
+
+```{plsql}
+LOOP
+   monthly_value := daily_value * 31;
+   EXIT WHEN monthly_value > 4000;
+END LOOP;
+```
+
+
+```{plsql}
+DECLARE
+    v_number NUMBER := 0;
+BEGIN
+    LOOP
+        v_number := v_number + 1;
+
+        -- Salimos del bucle si el número es 5
+        IF v_number = 5 THEN
+            EXIT;  -- Salir del bucle
+        END IF;
+
+        DBMS_OUTPUT.PUT_LINE('Número: ' || v_number);
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('Se salió del bucle.');
+END;
+
+```
+
+
+
+# Manejo de Excepciones (errores) {.card-2}
+
+En PL/SQL una advertencia o condición de error se llama **excepción**.PLSQL Ofrece un robusto mecanismo para manejar errores y excepciones en el código, lo que facilita la detección y gestión de problemas durante la ejecución.
+
+Cuando ocurre un error, se ejecuta la porción del programa marcada por el bloque EXCEPTION, transfiriéndose el control a ese bloque de sentencias.
+
+Se pueden definir excepcines personalizadas
+
+```{plsql}
+
+DECLARE
+   mi_error EXCEPTION;
+BEGIN
+   -- lógica que podría generar un error
+   RAISE mi_error;
+EXCEPTION
+   WHEN mi_error THEN
+      DBMS_OUTPUT.PUT_LINE('Se produjo mi_error');
+END;
+
+```
+
+```{plsql}
+DECLARE
+ -- Declaraciones
+BEGIN
+  -- Ejecucion
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+  -- Se ejecuta cuando ocurre una excepción de tipo NO_DATA_FOUND
+WHEN ZERO_DIVIDE THEN
+  -- Se ejecuta cuando ocurre una excepción de tipo ZERO_DIVIDE
+WHEN OTHERS THEN
+  -- Se ejecuta cuando ocurre una excepción de un tipo no tratado
+  -- en los bloques anteriores
+END;
+
+```
+
+Una vez finalizada la ejecución del bloque de EXCEPTION no se continúa ejecutando el bloque anterior. Si existe un bloque de excepción apropiado para el tipo de excepción se ejecuta dicho bloque. Si no existe un bloque de control de excepciones adecuado al tipo de excepción se ejecutará el bloque de excepción WHEN OTHERS THEN (¡si existe!). WHEN OTHERS debe ser el último manejador de excepciones.
+
+Las excepciones pueden ser definidas de forma interna o explícitamente por el usuario. Ejemplos de excepciones definidas de forma interna son la división por cero y la falta de memoria en tiempo de ejecución. Estas mismas condiciones excepcionales tienen sus propio tipos y pueden ser referenciadas por ellos: ZERO_DIVIDE y STORAGE_ERROR. Las excepciones definidas por el usuario deben ser alcanzadas explícitamente utilizando la sentencia RAISE.
+
+Con las excepciones se pueden manejar los errores cómodamente sin necesidad de mantener múltiples chequeos por cada sentencia escrita.
+También provee claridad en el código ya que permite mantener las rutinas correspondientes al tratamiento de los errores de forma separada de la lógica del negocio.
+
+## Excepciones predefinidas
+
+PL/SQL proporciona un gran número de excepciones predefinidas que permiten controlar las condiciones de error más habituales. Las excepciones predefinidas no necesitan ser declaradas, simplemente se utilizan cuando éstas son lanzadas por algún error determinado. La siguiente lista muestra las excepciones predeterminadas por PL/SQL y una breve descripción de cuándo son accionadas:
+
+PL/SQL declara excepciones predefinidas de forma global en el package STANDARD, el cual está asociado al entorno PL/SQL.
+
+-   **ACCESS_INTO_NULL** El programa intentó asignar valores a los atributos de un objeto no inicializado -6530.
+-   **COLLECTION_IS_NULL** El programa intentó asignar valores a una tabla anidada aún no inicializada -6531.
+-   **CURSOR_ALREADY_OPEN** El programa intentó abrir un cursor que ya se encontraba abierto. Recuerde que un cursor de ciclo FOR automáticamente lo abre y ello no se debe especificar con la msentencia OPEN -6511.
+-   **DUP_VAL_ON_INDEX** El programa intentó almacenar valores duplicados en una columna que se mantiene con restricción de integridad de un índice único (unique index) -1.
+-   **INVALID_CURSOR** El programa intentó efectuar una operación no válida sobre un cursor -1001.
+-   **INVALID_NUMBER** En una sentencia SQL, la conversión de una cadena de caracteres hacia un número falla cuando esa cadena no representa un número válido -1722.
+-   **LOGIN_DENIED** El programa intentó conectarse a Oracle con un nombre de usuario o password inválido -1017.
+-   **NO_DATA_FOUND** Una sentencia SELECT INTO no devolvió valores o el programa referenció un elemento no inicializado en una tabla indexada 100.
+-   **NOT_LOGGED_ON** El programa efectuó una llamada a Oracle sin estar conectado -1012.
+-   **PROGRAM_ERROR** PL/SQL Tiene un problema interno -6501.
+-   **ROWTYPE_MISMATCH** Los elementos de una asignación (el valor a asignar y la variable que lo contendrá) tienen tipos incompatibles. También se presenta este error cuando un parámetro pasado a un subprograma no es del tipo esperado -6504.
+-   **SELF_IS_NULL** El parámetro SELF (el primero que es pasado a un método MEMBER) es nulo -30625.
+-   **STORAGE_ERROR** La memoria se terminó o está corrupta -6500.
+-   **SUBSCRIPT_BEYOND_COUNT** El programa está tratando de referenciar un elemento de una colección indexada que se encuentra en una posición más grande que el número real de elementos de la colección -6533.
+-   **SUBSCRIPT_OUTSIDE_LIMIT** El programa está referenciando un elemento de una tabla utilizando un número fuera del rango permitido (por ejemplo, el elemento "-1") -6532.
+-   SYS_INVALID_ROWID La conversión de una cadena de caracteres hacia un tipo ROWID falló porque la cadena no representa un número -1410.
+-   **TIMEOUT_ON_RESOURC**E Se excedió el tiempo máximo de espera por un recurso en Oracle -51.
+-   **TOO_MANY_ROWS** Una sentencia SELECT INTO devuelve más de una fila -1422.
+-   **VALUE_ERROR** Ocurrió un error aritmético, de conversión o truncamiento. Por ejemplo, sucede cuando se intenta introducir un valor muy grande dentro de una variable más pequeña -6502.
+-   **ZERO_DIVIDE** El programa intentó efectuar una división por cero -1476.
+
+| Excepción               | Error de Oracle | Valor SQLCODE |
+|-------------------------|-----------------|---------------|
+| ACCESS_INTO_NULL        | ORA-06530       | -6530         |
+| COLLECTION_IS_NULL      | ORA-06531       | -6531         |
+| CURSOR_ALREADY_OPEN     | ORA-06511       | -6511         |
+| DUP_VAL_ON_INDEX        | ORA-00001       | -1            |
+| INVALID_CURSOR          | ORA-01001       | -1001         |
+| INVALID_NUMBER          | ORA-01722       | -1722         |
+| LOGIN_DENIED            | ORA-01017       | -1017         |
+| NO_DATA_FOUND           | ORA-01403       | +100          |
+| NOT_LOGGED_ON           | ORA-01012       | -1012         |
+| PROGRAM_ERROR           | ORA-06501       | -6501         |
+| ROWTYPE_MISMATCH        | ORA-06504       | -6504         |
+| STORAGE_ERROR           | ORA-06500       | -6500         |
+| SUBSCRIPT_BEYOND_COUNT  | ORA-06533       | -6533         |
+| SUBSCRIPT_OUTSIDE_LIMIT | ORA-06532       | -6532         |
+| TIMEOUT_ON_RESOURCE     | ORA-00051       | -51           |
+| TOO_MANY_ROWS           | ORA-01422       | -1422         |
+| VALUE_ERROR             | ORA-06502       | -6502         |
+| ZERO_DIVIDE             | ORA-01476       | -1476         |
+
+## Excepciones definidas por el usuario
+
+PL/SQL permite al usuario definir sus propias excepciones, que deberán ser declaradas y lanzadas explícitamente utilizando la sentencia RAISE.
+Las excepciones deben ser declaradas en el segmento DECLARE de un bloque, subprograma o paquete. Se declara una excepción como cualquier otra variable, asignándole el tipo EXCEPTION. Las mismas reglas de alcance aplican tanto sobre variables como sobre las excepciones.
+
+```{plsql}
+DECLARE
+ -- Declaraciones
+    MyExcepcion EXCEPTION;
+BEGIN  -- Ejecución
+EXCEPTION  -- Excepción
+END;
+
+```
+
+## Reglas de alcance
+
+Una excepción es válida dentro de su ambito de alcance, es decir, el bloque o programa donde ha sido declarada. Las excepciones predefinidas son siempre válidas. Como las variables, una excepción declarada en un bloque es local a ese bloque y global a todos los subbloques que comprende.
+
+## La sentencia RAISE
+
+La sentencia RAISE permite lanzar una excepción en forma explícita. Es posible utilizar esta sentencia en cualquier lugar que se encuentre dentro del alcance de la excepción.
+
+```{plsql}
+DECLARE
+ -- Declaramos una excepción identificada por VALOR_NEGATIVO
+    VALOR_NEGATIVO EXCEPTION;
+    valor NUMBER;
+BEGIN
+  -- Ejecución valor := -1;
+    IF valor < 0 THEN
+        RAISE VALOR_NEGATIVO;
+    END IF;
+EXCEPTION  -- Excepción
+WHEN VALOR_NEGATIVO THEN
+    dbms_output.put_line('El valor no puede ser negativo');
+END;
+```
+
+Con la sentencia RAISE podemos lanzar una excepción definida por el usuario o predefinida, siendo el comportamiento habitual lanzar excepciones definidas por el usuario.
+
+## Propagación de excepciones
+
+Una de las características más interesantes de la excepciones es su propagación. Cuando se lanza una excepción, el control se transfiere hasta la sección EXCEPTION del bloque donde se ha producido la excepción. Entonces se busca un manejador válido de la excepción (WHEN THEN, WHEN OTHERS THEN) dentro del bloque actual. En el caso de que no se encuentre ningún manejador válido, el control del programa se desplaza hasta el bloque EXCEPTION del bloque que ha realizado la llamada PL/SQL.
+
+# Subprogramas en PL/SQL {.card-2}
+
+Como hemos visto anteriormente, los bloques de PL/SQL pueden ser bloques anónimos (scripts) y subprogramas. Los subprogramas son bloques de PL/SQL a los que asignamos un nombre identificativo y que normalmente almacenamos en la propia base de datos para su posterior ejecución. Los subprogramas pueden recibir parámetros. Los subprogramas pueden ser de varios tipos:
+
+-   Procedimientos almacenados.
+-   Funciones.
+-   Triggers.
+-   Subprogramas en bloques anónimos.
+
+# Procedimientos almacenados {.card-2}
+
+Un procedimiento almacenado es un subprograma que ejecuta una acción especifica y que no devuelve ningún valor. Un procedimiento tiene un nombre, un conjunto de parámetros (opcional) y un bloque de código. La sintaxis de un procedimiento almacenado es la siguiente:
+
+```{plsql}
+CREATE [OR REPLACE] PROCEDURE <procedure_name> [(<param1> [IN|OUT|IN OUT] <type>,
+                             <param2> [IN|OUT|IN OUT] <type>, ...)] 
+IS
+  -- Declaración de variables locales
+BEGIN
+  -- Sentencias
+[EXCEPTION]
+  -- Sentencias control de excepción
+END [<procedure_name>];
+```
+
+El uso de **OR REPLACE** permite sobreescribir un procedimiento existente. Si se omite, y el procedimiento existe, se producirá un error. La sintaxis es muy parecida a la de un bloque anónimo, salvo porque se reemplaza la sección DECLARE por la secuencia PROCEDURE ... IS y en la especificación del procedimiento debemos especificar el tipo de datos de cada parámetro. Al especificar el tipo de dato del parámetro no debemos especificar la longitud del tipo. Los parámetros pueden ser de entrada de datos (IN), de salida datos (OUT) o de entrada salida (IN OUT). El valor por defecto es IN, y se toma ese valor en caso de que no especifiquemos nada.
+
+El procecedimiento se puede excutar con la cláusula **execute** o por un bloque anonimo
+
+```{plsql}
+CREATE OR REPLACE PROCEDURE Actualiza_Saldo(cuenta NUMBER,
+                           new_saldo NUMBER)
+IS
+  -- Declaración de variables locales
+BEGIN
+
+  -- Sentencias
+  UPDATE SALDOS_CUENTAS
+     SET SALDO = new_saldo,
+             FX_ACTUALIZACION = SYSDATE
+  WHERE CO_CUENTA = cuenta;
+  
+END Actualiza_Saldo;
+  
+  
+-- executar el procedimiento pasando los parametros
+execute Actualiza_Saldo(n_cuenta, saldo);
+
+-- bloque anonimo
+
+BEGIN 
+
+Actualiza_Saldo(n_cuenta, saldo);
+END;
+  
+```
+
+
+
+# Funciones {.card-2}
+
+
+Una función es un subprograma que calcula un valor. Las funciones y los procedimientos se estructuran igual, excepto que las funciones deben tener una claúsula **RETURN**, es decir, deben devolver un valor. 
+
+La sintaxis general de una función es la siguiente:
+
+```{plsql}
+CREATE [OR REPLACE] FUNCTION <fn_name>[(<param1> IN <type>, <param2> IN <type>, ...)]
+RETURN
+ <return_type>
+IS
+  result <return_type>;
+BEGIN   return(result);
+  
+[EXCEPTION]
+  -- Sentencias control de excepción
+END [<fn_name>];
+
+```
+
+# Cursores {.card-2}
+
+Los cursores se utilizan para procesar filas recuperadas por una consulta SQL.
+
+El conjunto de filas que devuelve una consulta, puede ser 0, 1 o N, dependiendo de a cuantas filas afecte la condición de búsqueda. Cuando una consulta devuelve múltiples filas, se debe declarar un cursor para procesarlas. Se puede declarar un cursor en la parte de declaraciones de cualquier bloque, subprograma o package PL/SQL.
+
+PL/SQL utiliza cursores para gestionar las instrucciones SELECT. Un cursor es un conjunto de registros devuelto por una instrucción SQL. Técnicamente, los cursores son fragmentos de memoria reservados para procesar los resultados de una consulta SELECT. Podemos distinguir dos tipos de cursores:
+
+-   **Cursores implícitos.** Este tipo de cursores se utiliza para operaciones SELECT INTO. Se usan cuando la consulta devuelve un único registro.
+-   **Cursores explícitos.** Son los cursores que son declarados y
+    controlados por el programador. Se utilizan cuando la consulta devuelve un conjunto de registros. Ocasionalmente también se utilizan en consultas que devuelven un único registro por razones de eficiencia. Son más rápidos.
+
+Se utilizan tres instrucciones para controlar un cursor: **OPEN, FETCH,y CLOSE**. En primer lugar, se inicializa el cursor con la sentencia OPEN, la cual identifica al conjunto resultante. Entonces, se usa la sentencia FETCH para recuperar la primera fila; se puede ejecutar FETCH de manera repetida hasta que todas las filas han sido tratadas, cuando se procesa la última, se debe cerrar el cursor con la sentencia CLOSE. Se pueden procesar varias consultas de forma paralela, declarando y abriendo múltiples cursores.
+
+
+## Atributos
+
+Los atributos permiten controlar la execucion:
+
+-   **%ISOPEN** Devuelve true si el cursor está abierto.
+-   **%FOUND** Devuelve true si el registro fue sastifactoriamente procesado.
+-   **%NOTFOUNT** Devuelve true si el registro  no pudo ser procesado. Normalmente esto ocurre cuando ya se han procesado todos los registros devueltos por el cursor.
+-   **%ROWCOUNT** Devuelve el número de resgistros que han sido procesados hasta ese momento.
+
+
+## Apertura de un Cursor
+
+Cuando se abre un cursor, se ejecuta la consulta que tiene asociada, la cual recupera todas las filas que se ven incluidas en su condición de búsqueda. Para aquellos cursores que han sido declarados utilizando la claúsula FOR UPDATE, la sentencia OPEN también se encarga de bloquear las filas. Veamos un ejemplo de sentencia OPEN:
+
+```{plsql}
+
+DECLARE 
+
+ CURSOR c1 IS 
+ SELECT nom_emp, trab_emp 
+ FROM emp 
+ WHERE sal_emp<3000; 
+ … 
+BEGIN 
+ OPEN c1; 
+ … 
+END;
+ 
+```
+
+Las filas del conjunto resultante no son recuperadas cuando se ejecuta la sentencia OPEN, sino que lo serán más tarde cuando se ejecute la sentencia FETCH.
+
+## Paso de parámetros
+
+También se utiliza la sentencia OPEN para pasar parámetros a un cursor.
+
+A menos que se deseen aceptar los valores establecidos por defecto, cada parámetro formal del cursor debe tener un parámetro correspondiente en la sentencia OPEN. Veamos un ejemplo:
+
+```{plsql }
+DECLARE 
+ nombre emp.nom_emp%TYPE; 
+ salario emp.sal_emp%TYPE; 
+ CURSOR c1 (nom VARCHAR2, sueldo NUMBER) IS 
+ SELECT …
+Cualquiera de las siguientes sentencias abriría el cursor: 
+OPEN c1 (nombre, 3000); 
+OPEN c1 ('FRANCISCO', 4000); 
+OPEN c1 (nombre, salario);
+
+```
+
+## Recuperación de valores de un Cursor
+
+La sentencia FETCH recupera una a una, las filas resultantes de la apertura del cursor. Después de cada fetch, el cursor avanza a la siguiente fila de la consulta.
+
+FETCH c1 INTO mi_numemp, mi_nomemp, mi_numdept;
+
+Para cada valor de columna devuelto por la consulta asociada al cursor, debe existir su correspondiente variable en la lista INTO. Obviamente, sus tipos de datos deben ser compatibles. Normalmente, se emplea la sentencia FETCH de la siguiente manera:
+
+```{plsql}
+
+LOOP 
+ FETCH c1 INTO mi_record; 
+ EXIT WHEN c1%NOTFOUND; 
+ -- Procesa la información del record… 
+END LOOP;
+
+```
+
+La consulta puede referenciar a variables de PL/SQL que estén en su ámbito. Sin embargo, algunas variables de la consulta se evalúan tan sólo cuando se abre el cursor. En el siguiente ejemplo que veremos, cada salario recuperado se multiplica por 2, aunque factor se vaya incrementando después de cada fetch:
+
+```{plsql}
+DECLARE 
+ mi_sal emp.sal_emp%TYPE; 
+ mi_trabajo emp.trab_emp%TYPE; 
+ factor INTEGER:=2; 
+ CURSOR c1 IS 
+ SELECT factor*sal_emp FROM emp 
+ WHERE trab_emp=mi_trabajo; 
+BEGIN 
+ … 
+ OPEN c1; -- Aquí factor vale 2… 
+ LOOP 
+ FETCH c1 INTO mi_sal; 
+ EXIT WHEN c1%NOTFOUND; 
+ factor:=factor+1; -- No Afecta al Fetch… 
+ END LOOP;
+ END;
+```
+
+Para cambiar el resultado del conjunto, o los valores de las variables de la consulta, se debe cerrar y abrir el cursor con las variables conteniendo los nuevos valores.
+
+Se puede utilizar un lista INTO diferente en fetches separados para el mismo cursor. Veamos un ejemplo:
+
+```{plsql}
+
+DECLARE 
+ CURSOR c1 IS 
+ SELECT nom_emp FROM emp; 
+ nombre1 emp.nom_emp%TYPE; 
+ nombre2 emp.nom_emp%TYPE; 
+ nombre2 emp.nom_emp%TYPE; 
+BEGIN 
+ OPEN c1; 
+ FETCH c1 INTO nombre1; -- Recupera la primera fila… 
+ FETCH c1 INTO nombre2; -- Recupera la segunda fila… 
+ FETCH c1 INTO nombre3; -- Recupera la tercera fila… 
+ … 
+ CLOSE c1; 
+END;
+```
+
+Si se realiza un fetch después de haber recuperado la última fila de la consulta, los valores de las variables son indeterminados.
+
+## Cierre de un Cursor
+
+La sentencia CLOSE deshabilita el cursor, y el resultado del mismo pasa a ser indefinido. Un ejemplo de la sentencia CLOSE sería: **CLOSE c1**;
+
+Una vez que un cursor se cierra, se puede volver a abrir sin problemas. Cualquier otra operación sobre un cursor cerrado, provoca una excepción que se llama INVALID_CURSOR.
+
+## Empaquetando Cursores
+
+Es posible separar la especificación del cursor de su cuerpo en un Package. De esta forma, se puede cambiar el cuerpo del cursor sin tener que cambiar la especificación. Se codifica la especificación del cursor en la parte declarativa del package utilizando la siguiente sintaxis:
+
+```{plsql}
+
+CURSOR nombre_cursor [ (parametro [, parametro] … ) ] 
+ RETURN tipo_de_retorno;
+```
+
+```{plsql}
+CREATE PACKAGE acciones_emp AS 
+ /* Declaramos la especificación del Cursor */ 
+ CURSOR c1 RETURN emp%ROWTYPE; 
+ … 
+END acciones_emp; 
+CREATE PACKAGE BODY acciones_emp AS 
+ /* Definimos el cuerpo del Cursor */ 
+ CURSOR c1 RETURN emp%ROWTYPE IS 
+ SELECT * FROM emp 
+ WHERE sal_emp>3000; 
+ … 
+END acciones_emp; 
+```
+
+La especificación del cursor no tiene sentencia SELECT, ya que la claúsula RETURN define el tipo de dato del valor resultante. Sin embargo, el cuerpo del cursor debe tener la sentencia SELECT, y la misma claúsula RETURN que la de su especificación. También deben coincidir el número y tipos de datos de los elementos seleccionados con el SELECT, con la claúsula RETURN.
+
+Los cursores empaquetados incrementan la flexibilidad, ya que se puede cambiar el cuerpo del cursor, sin tener que modificar su definición.
+
+## Utilización de Cursores con bucles FOR
+
+En la mayoría de los casos prácticos, podemos sustituir las instrucciones de manejo de cursores: OPEN, FETCH y CLOSE, por la utilización de bucles FOR. Esto simplifica mucho el funcionamiento ya que no es necesario abrir el cursor, ni realizar el fetch, ni cerrarlo posteriormente, ya que todas estas operaciones van implícitas cuando se usa el bucle FOR. Veamos un ejemplo:
+
+```{plsql}
+DECLARE 
+ resultado temp.col1%TYPE; 
+ 
+ CURSOR c1 IS 
+   SELECT n1, n2, n3 FROM tabla_datos 
+   WHERE num_exper=1;
+ 
+BEGIN 
+ 
+ FOR c1_rec IN c1 LOOP 
+ 
+ /* Calculamos y almacenamos los resultados */ 
+ resultado:=c1_rec.n2 / (c1_rec.n1+c1_rec.n3); 
+ INSERT INTO temp VALUES (resultado, NULL, NULL); 
+ END LOOP; 
+ 
+ COMMIT; 
+END;
+```
+
+Cada Iteración del bucle, lleva implícito un fetch de la consulta asociada a un cursor. Al entrar en el bucle se abre el cursor, y al salir se cierra.
+
+La manera de referenciar a los elementos del cursor, es mediante el nombre del identificador que hemos asociado al bucle FOR, y después un punto y el nombre del campo de la consulta que queramos referenciar.
+
+## Cursores Implícitos
+
+Los cursores implícitos no necesitan declaración.
+
+Los cursores implícitos se utilizan para realizar consultas SELECT que devuelven un único registro. Deben tenerse en cuenta los siguientes puntos cuando se utilizan cursores implícitos:
+
+-   Con cada cursor implícito debe existir la palabra clave INTO.
+-   Las variables que reciben los datos devueltos por el cursor tienen que contener el mismo tipo de dato que las columnas de la tabla.
+-   Los cursores implícitos solo pueden devolver una única fila. En caso de que se devuelva más de una fila (o ninguna fila) se producirá una excepción.
+
+### Excepciones asociadas a los cursores implícitos
+
+Los cursores implícitos sólo pueden devolver una fila, por lo que pueden producirse determinadas excepciones. Las más comunes que se pueden encontrar son no_data_found y too_many_rows. La siguiente tabla explicabrevemente estas excepciones:
+
+-   **NO_DATA_FOUND** Se produce cuando una sentencia SELECT intenta recuperar datos pero ninguna fila satisface sus condiciones. Es decir, cuando "no hay datos".
+-   **TOO_MANY_ROWS** Dado que cada cursor implícito sólo es capaz de recuperar una fila , esta excepción detecta la existencia de más de una fila.
+
+## Cursores Explícitos
+
+Los cursores explícitos se emplean para realizar consultas SELECT que pueden devolver **cero filas o más de una fila.** Para trabajar con un cursor explícito necesitamos realizar las siguientes tareas:
+
+-   Declarar el cursor.
+-   Abrir el cursor con la instrucción OPEN.s
+-   Leer los datos del cursor con la instrucción FETCH.
+-   Cerrar el cursor y liberar los recursos con la instrucción CLOSE
+
+Hay que tener en cuenta que, al leer los datos del cursor, debemos hacerlo sobre variables del mismo tipo de datos de la tabla (o tablas) que trata el cursor.
+
+```{plsql}
+CURSOR nombre_cursor IS
+  instrucción_SELECT // Se declara el cursor
+
+CURSOR nombre_cursor(param1 tipo1, ..., paramN tipoN) IS
+  instrucción_SELECT // Declaracion de cursor con parametro
+
+OPEN nombre_cursor; // Abrir un cursor
+     
+OPEN nombre_cursor(valor1, valor2, ..., valorN); // abrir cursor con parametros
+ 
+FETCH nombre_cursor INTO lista_variables; // Recuperada datos en variables
+
+FETCH nombre_cursor INTO registro_PL/SQL; // Recupera datos en registro
+
+CLOSE nombre_cursor; // Cierra el cursor
+```
+
+## Utilización de Subconsultas
+
+No es necesario declarar un cursor si no se desea, puesto que PL/SQL **permite sustituir la referencia a un cursor por una subconsulta**. Veamos un ejemplo en el cual un bucle FOR calcula un bonus, e inserta los resultados en una tabla de Bbdd:
+
+```{plsql}
+DECLARE 
+ bonus REAL; 
+BEGIN 
+ FOR emp_rec IN (SELECT num_emp, sal_emp, com_emp FROM 
+emp) LOOP 
+ bonus:=(emp_rec.sal_emp*0.05) + (emp_rec.com_emp*0.25); 
+ INSERT INTO bonus_emp VALUES (emp_rec.num_emp, bonus); 
+ END LOOP; 
+ COMMIT; 
+END;
+```
+
+# Triggers - desencadenadores {.card-2}
+
+Permite la definición de desencadenadores que se ejecutan automáticamente en respuesta a eventos específicos en la base de datos, como la inserción, actualización o eliminación de registros.
+
+```{plsql}
+
+CREATE OR REPLACE TRIGGER mi_trigger
+BEFORE INSERT ON mi_tabla
+FOR EACH ROW
+BEGIN
+   -- lógica del trigger
+   DBMS_OUTPUT.PUT_LINE('Nuevo dato insertado');
+END;
+
+```
+
+De todas formas, y aunque esto en ocasiones puede ser práctico para evitarnos definir el cursor, se debe tener mucho cuidado al utilizarlo, puesto que puede dificultar mucho la lectura del código fuente, e incluso su mantenimiento posterior.
+
+# Paquetes {.card-2}
+
+Los paquetes son objetos PL/SQL que agrupan procedimientos, funciones, tipos de datos, constantes, etc., para facilitar la modularidad y el mantenimiento del código.
+
+```{plsql}
+CREATE OR REPLACE PACKAGE mi_paquete AS
+   PROCEDURE procedimiento1;
+   PROCEDURE procedimiento2;
+END mi_paquete;
+
+CREATE OR REPLACE PACKAGE BODY mi_paquete AS
+   PROCEDURE procedimiento1 IS
+   BEGIN
+      -- lógica del procedimiento1
+   END;
+
+   PROCEDURE procedimiento2 IS
+   BEGIN
+      -- lógica del procedimiento2
+   END;
+END mi_paquete;
+```
+
+# Sql embebido {.card-2}
+
+En PL/SQL, se puede incorporar código SQL directamente en bloques PL/SQL, lo que se conoce como SQL anidado o embebido. Esto permite que las operaciones SQL se integren de manera estrecha con la lógica de programación PL/SQL. Aquí hay algunos ejemplos de cómo se puede hacer:
+
+El uso de SQL embebido en PL/SQL permite la ejecución de operaciones SQL directamente dentro de los bloques PL/SQL, lo que facilita la manipulación y recuperación de datos en la base de datos Oracle. Además, el uso de cursores, ya sea implícitos o explícitos, proporciona flexibilidad en el manejo de conjuntos de resultados obtenidos mediante consultas SQL.
+
+## SELECT en un Bloque PL/SQL:
+
+```{plsql}
+
+DECLARE
+   v_nombre VARCHAR2(50);
+BEGIN
+   -- SQL embebido
+   SELECT nombre INTO v_nombre FROM empleados WHERE id = 1;
+   
+   -- Resto del código PL/SQL
+   DBMS_OUTPUT.PUT_LINE('El nombre es: ' || v_nombre);
+END;
+
+```
+
+## INSERT/UPDATE/DELETE en un Bloque PL/SQL:
+
+```{plql}
+DECLARE
+   v_id NUMBER := 1;
+BEGIN
+   -- SQL embebido (UPDATE)
+   UPDATE empleados SET salario = salario * 1.1 WHERE id = v_id;
+   
+   -- SQL embebido (INSERT)
+   INSERT INTO registros (id, descripcion) VALUES (v_id, 'Nuevo registro');
+   
+   -- SQL embebido (DELETE)
+   DELETE FROM registros WHERE id = v_id;
+END;
+```
+
+## Utilizando Cursores Implícitos:
+
+```{plsql}
+DECLARE
+   v_salario_total NUMBER := 0;
+BEGIN
+   -- SQL embebido con cursor implícito
+   FOR empleado IN (SELECT salario FROM empleados) LOOP
+      v_salario_total := v_salario_total + empleado.salario;
+   END LOOP;
+   
+   -- Resto del código PL/SQL
+   DBMS_OUTPUT.PUT_LINE('Salario total: ' || v_salario_total);
+END;
+```
+
+## Utilizando Cursores Explícitos:
+
+```{plsql}
+DECLARE
+   v_id_empleado NUMBER := 1;
+   v_salario_empleado NUMBER;
+   CURSOR c_empleado IS SELECT salario FROM empleados WHERE id = v_id_empleado;
+BEGIN
+   -- SQL embebido con cursor explícito
+   OPEN c_empleado;
+   FETCH c_empleado INTO v_salario_empleado;
+   CLOSE c_empleado;
+   
+   -- Resto del código PL/SQL
+   DBMS_OUTPUT.PUT_LINE('Salario del empleado ' || v_id_empleado || ': ' || v_salario_empleado);
+END;
+
+```
+
+# Sql Dinámico {.card-2}
+
+SQL dinámico en PL/SQL se refiere a la construcción y ejecución de sentencias SQL en tiempo de ejecución. Esto proporciona flexibilidad para crear consultas o comandos SQL de forma dinámica, basándose en condiciones o variables que no son conocidas en tiempo de compilación.
+
+Aquí hay un ejemplo básico de cómo se puede implementar SQL dinámico en PL/SQL:
+
+```{plsql}
+DECLARE
+   v_columna VARCHAR2(30) := 'nombre';
+   v_valor VARCHAR2(50) := 'John';
+   v_sql VARCHAR2(200);
+   v_resultado NUMBER;
+BEGIN
+   -- Construir la sentencia SQL dinámicamente
+   v_sql := 'SELECT COUNT(*) FROM empleados WHERE ' || v_columna || ' = :valor';
+
+   -- Ejecutar la sentencia SQL
+   EXECUTE IMMEDIATE v_sql INTO v_resultado USING v_valor;
+
+   -- Mostrar el resultado
+   DBMS_OUTPUT.PUT_LINE('Número de empleados con ' || v_columna || ' igual a ' || v_valor || ': ' || v_resultado);
+END;
+```
+
+En este ejemplo:
+
+**v_columna y v_valor** son variables que especifican la columna y el valor para la condición WHERE en la sentencia SQL.
+
+**v_sql** es la cadena que almacena la sentencia SQL dinámica que se construye.
+
+**EXECUTE IMMEDIATE** se utiliza para ejecutar la sentencia SQL dinámica.
+
+**INTO v_resultado** se utiliza para recuperar el resultado de la consulta y almacenarlo en la variable **v_resultado.**
+
+**USING v_valor** se utiliza para pasar el valor de la variable v_valor como un parámetro en la sentencia SQL.
+
+Es importante tener en cuenta las consideraciones de seguridad al trabajar con SQL dinámico para evitar vulnerabilidades de inyección de SQL. Se deben utilizar parámetros vinculados (USING) en lugar de  concatenación directa de valores en la cadena SQL para prevenir este tipo de ataques.
+
+Además, ten en cuenta que el uso excesivo de SQL dinámico puede hacer que el código sea más difícil de entender y mantener, por lo que se debe utilizar con precaución y preferiblemente en situaciones donde la construcción dinámica de SQL sea realmente necesaria.
+
+
+**Ejemplo de SQL Dinámico en Oracle**
+
+Supongamos que quieres realizar una consulta que seleccione datos de la tabla de productos (oe.products) y que el usuario pueda especificar qué columnas quiere ver y qué filtros aplicar.
+
+```{plsql}
+
+DECLARE
+    v_sql      VARCHAR2(4000);
+    v_columns  VARCHAR2(100) := 'product_id, product_name, list_price'; -- Columnas a seleccionar
+    v_filter   VARCHAR2(100) := 'list_price > 50'; -- Filtro
+BEGIN
+    -- Construir la consulta SQL dinámicamente
+    v_sql := 'SELECT ' || v_columns || 
+             ' FROM oe.products' ||
+             ' WHERE ' || v_filter;
+
+    -- Ejecutar la consulta SQL dinámica
+    EXECUTE IMMEDIATE v_sql;
+END;
+
+
+```
+
+## Uso de un Cursor Dinámico
+
+Si necesitas procesar los resultados, puedes usar un cursor dinámico.
+
+```{plsql}
+
+DECLARE
+    v_sql      VARCHAR2(4000);
+    v_columns  VARCHAR2(100) := 'product_id, product_name, list_price'; -- Columnas a seleccionar
+    v_filter   VARCHAR2(100) := 'list_price > 50'; -- Filtro
+    TYPE t_record IS RECORD (
+        product_id   oe.products.product_id%TYPE,
+        product_name oe.products.product_name%TYPE,
+        list_price   oe.products.list_price%TYPE
+    );
+    v_rec t_record;
+    v_cursor SYS_REFCURSOR;
+BEGIN
+    -- Construir la consulta SQL dinámicamente
+    v_sql := 'SELECT ' || v_columns || 
+             ' FROM oe.products' ||
+             ' WHERE ' || v_filter;
+
+    -- Abrir el cursor
+    OPEN v_cursor FOR v_sql;
+
+    -- Procesar los resultados
+    LOOP
+        FETCH v_cursor INTO v_rec;
+        EXIT WHEN v_cursor%NOTFOUND;
+
+        -- Hacer algo con el registro
+        DBMS_OUTPUT.PUT_LINE('ID: ' || v_rec.product_id || 
+                             ', Nombre: ' || v_rec.product_name || 
+                             ', Precio: ' || v_rec.list_price);
+    END LOOP;
+
+    -- Cerrar el cursor
+    CLOSE v_cursor;
+END;
+
+
+```
+
+
+
+## Consideraciones sobre SQL Dinámico
+- **Seguridad**: Ten cuidado con la inyección de SQL al construir consultas dinámicamente. Asegúrate de validar las entradas si provienen de fuentes externas.
+
+- **Performance**: Las consultas dinámicas pueden ser menos eficientes que las estáticas, ya que el optimizador de consultas no puede hacer la misma optimización.
+
+
+
+# Subconsultas {.card-2}
+
+Las **subconsultas** en SQL son consultas anidadas dentro de otras consultas. Se utilizan para realizar cálculos intermedios o devolver datos que se usan en la consulta externa. Oracle permite el uso de subconsultas de varias maneras, como en el **SELECT**, **FROM**, o **WHERE**.
+
+
+## Subconsulta Escalar
+
+
+Es una subconsulta que devuelve un único valor (una fila y una columna), y se puede usar donde se espera un valor escalar (como en una expresión).
+
+```{plsql}
+SELECT first_name, 
+       last_name, 
+       (SELECT department_name 
+        FROM departments 
+        WHERE department_id = employees.department_id) AS department
+FROM employees;
+
+```
+
+En este ejemplo, la subconsulta dentro del SELECT devuelve el nombre del departamento al que pertenece el empleado.
+
+
+## Subconsulta en el WHERE (Subconsulta de Filtrado)
+
+Se utiliza una subconsulta dentro de la cláusula WHERE para filtrar resultados en función de otra consulta.
+
+
+```{plsql}
+SELECT first_name, last_name
+FROM employees
+WHERE department_id = 
+    (SELECT department_id 
+     FROM departments 
+     WHERE department_name = 'Ventas');
+
+
+```
+
+Este ejemplo devuelve todos los empleados que trabajan en el departamento de "Ventas". La subconsulta filtra la consulta externa devolviendo el department_id correspondiente.
+
+##  Subconsulta en el FROM (Subconsulta en Línea o Inline View)
+
+En este caso, una subconsulta se usa como si fuera una tabla en la cláusula FROM.
+
+```{plsql}
+SELECT dept_name, avg_salary
+FROM (SELECT department_name AS dept_name, 
+             AVG(salary) AS avg_salary
+      FROM employees
+      GROUP BY department_name);
+
+```
+
+## Subconsulta con IN
+
+Se usa para comprobar si un valor de la consulta externa existe en los resultados de la subconsulta.
+
+```{plsql}
+SELECT first_name, last_name
+FROM employees
+WHERE department_id IN
+    (SELECT department_id
+     FROM departments
+     WHERE location_id = 1700);
+
+```
+
+## Subconsulta Correlacionada
+
+A diferencia de una subconsulta normal, una subconsulta correlacionada depende de los datos de la consulta externa. Se ejecuta una vez por cada fila procesada por la consulta externa.
+
+
+```{plsql}
+SELECT first_name, last_name, salary
+FROM employees e
+WHERE salary > 
+    (SELECT AVG(salary)
+     FROM employees
+     WHERE department_id = e.department_id);
+
+```
+
+Este ejemplo compara el salario de cada empleado con el salario promedio de su departamento. La subconsulta depende de los valores de la consulta externa.
+
+## Subconsultas con EXISTS
+
+**EXISTS** se utiliza para comprobar si una subconsulta devuelve al menos una fila. Si es así, la condición se evalúa como verdadera.
+
+```{plsql}
+
+SELECT department_name
+FROM departments d
+WHERE EXISTS 
+    (SELECT 1
+     FROM employees e
+     WHERE e.department_id = d.department_id);
+
+
+```
+
+Este ejemplo devuelve los nombres de los departamentos que tienen al menos un empleado. La subconsulta verifica si existe algún empleado en el departamento.
+
+## Subconsulta con **ANY** y **ALL**
+ANY y ALL se utilizan para comparar un valor con el conjunto de resultados devueltos por la subconsulta.
+
+
+### ANY
+
+Esto devuelve empleados cuyo salario es mayor que cualquier salario en el departamento 90.
+
+```{plsql}
+SELECT first_name, last_name, salary
+FROM employees
+WHERE salary > ANY 
+    (SELECT salary 
+     FROM employees 
+     WHERE department_id = 90);
+
+```
+
+### ALL
+Este devuelve empleados cuyo salario es mayor que todos los salarios en el departamento 90.
+
+```{plsql}
+SELECT first_name, last_name, salary
+FROM employees
+WHERE salary > ALL 
+    (SELECT salary 
+     FROM employees 
+     WHERE department_id = 90);
+
+
+```
+
+
+
+
+
+# CTE {.card-2}
+
+En PL/SQL, una CTE (Common Table Expression), o expresión de tabla común, es una subconsulta temporal que puedes utilizar dentro de una consulta más grande. Se define utilizando la cláusula **WITH** y resulta útil para mejorar la legibilidad de las consultas, simplificar el manejo de subconsultas complejas y optimizar el rendimiento en algunos casos.
+
+Los diferentes bloques van separados por una coma, la consulta particular de cada CTE va entre paréntesis precedida por la palabramreservada **AS**.
+
+```{plsql}
+
+
+WITH SalarioPromedio AS (
+    -- CTE para calcular el salario promedio por departamento
+   
+    SELECT id_departamento, AVG(salario) AS salario_promedio
+    FROM empleados
+    GROUP BY id_departamento
+),
+EmpleadosConSalarioMayor AS (
+    -- CTE para seleccionar los empleados con salario mayor al promedio de su departamento
+    
+    SELECT e.id_empleado, e.nombre, e.salario, e.id_departamento
+    FROM empleados e
+    JOIN SalarioPromedio sp 
+      ON e.id_departamento = sp.id_departamento
+    WHERE e.salario > sp.salario_promedio
+)
+-- Consulta principal que muestra los empleados con salario superior al promedio en su departamento
+
+SELECT 
+  ecs.id_empleado, 
+  ecs.nombre,
+  ecs.salario, 
+  d.nombre AS nombre_departamento
+FROM EmpleadosConSalarioMayor a
+JOIN departamentos d 
+  ON ecs.id_departamento = d.id_departamento;
+
+```
+
+Este ejemplo muestra cómo utilizar múltiples CTEs para simplificar consultas más complejas sin tener que repetir la misma lógica varias veces o embutir subconsultas largas dentro de la consulta principal.
+
+# Funciones de ventana {.card-2}
+
+**Las funciones de ventana (OVER PARTITION)**  son un conjunto de funciones que permiten realizar cálculos sobre un conjunto de filas relacionadas, manteniendo la visibilidad de cada fila individual. A diferencia de las agregaciones tradicionales, como **SUM(), AVG(), COUNT()**, que agrupan filas y devuelven una sola fila por grupo, las funciones de ventana no agrupan las filas, sino que calculan resultados basados en un conjunto de filas relacionadas, llamadas "ventana".
+
+Las funciones de ventana son especialmente útiles para realizar **cálculos agregados avanzados y análisis de datos dentro de un conjunto de resultados**.
+
+
+Algunas de las funciones de ventana más comunes en SQL son:
+
+-   **ROW_NUMBER()**: Asigna un número secuencial único a cada fila dentro de una partición de resultados ordenada según una especificación de orden.
+
+-   **RANK()**: Asigna un rango a cada fila dentro de una partición de resultados ordenada, con posibles valores repetidos para filas con valores iguales.
+
+-   **DENSE_RANK()**: Similar a RANK(), pero no hay brechas en la secuencia de rangos, incluso si hay valores repetidos en la partición de resultados ordenada.
+
+-   **NTILE(n)**: Divide el conjunto de filas en "n" grupos (ventanas) aproximadamente iguales y asigna un número de grupo a cada fila.
+
+-   **LEAD() y LAG()** : Estas funciones permiten acceder al valor de una fila siguiente (LEAD) o anterior (LAG) dentro de una partición de resultados ordenada.
+
+-   **FIRST_VALUE() y LAST_VALUE()** : Devuelven el primer o último valor dentro de una partición de resultados, respectivamente.
+
+-   **SUM(), AVG(), MIN(), MAX(), COUNT()**: Estas funciones pueden utilizarse como funciones de ventana para calcular sumas, promedios, mínimos, máximos y recuentos dentro de una ventana específica.
+
+Las funciones de ventana se utilizan comúnmente en combinación con cláusulas como *OVER(PARTITION BY ... ORDER BY ...)*, que especifican cómo se debe dividir el conjunto de filas en particiones y cómo se deben ordenar dentro de cada partición.
+
+```         
+  operacion (colum_name)  over (partition by colum_list order by colum_list rows or range) 
+  sum,avg,min,max,count,count(distinct), rank,dense_rank,row_number,ntile,lang,lead,first_value,last_value
+  NTH_VALUE,
+
+```
+
+## Ejemplos {.tabset .tabset-fade .tabset-pills .card-2}
+
+Estos ejemplos te muestran cómo usar diversas funciones de ventana con el esquema OE de Oracle para realizar análisis más complejos sobre los datos
+
+### SUM
+
+Este ejemplo calcula el total de ventas por cliente, mostrando el total acumulado en cada fila.
+
+```{plsql}
+
+WITH OrderTotals AS (
+    SELECT 
+        o.customer_id,
+        o.order_id,
+        o.order_date,
+        SUM(oi.quantity * p.list_price) AS order_total
+    FROM 
+        oe.order_items oi
+    JOIN 
+        oe.orders o ON oi.order_id = o.order_id
+    JOIN 
+        oe.products p ON oi.product_id = p.product_id
+    GROUP BY 
+        o.customer_id, o.order_id, o.order_date
+)
+SELECT 
+    customer_id,
+    order_id,
+    order_date,
+    order_total,
+    SUM(order_total) OVER (PARTITION BY customer_id ORDER BY order_date) AS total_sales_by_customer
+FROM 
+    OrderTotals
+ORDER BY 
+    customer_id, order_date;
+
+
+
+```
+
+
+### ROW_NUMBER 
+
+Este ejemplo asigna un número de fila a cada pedido, ordenado por la fecha del pedido en orden descendente.
+
+```{plsql}
+
+SELECT order_id,
+       customer_id,
+       order_date,
+       ROW_NUMBER() OVER (ORDER BY order_date DESC) AS row_num
+FROM oe.orders;
+
+```
+
+
+### RANK
+
+Aquí se asigna un rango a los productos según su precio, mostrando los productos más caros primero. Si hay productos con el mismo precio, recibirán el mismo rango, pero se saltará el siguiente rango.
+
+```{plsql}
+SELECT product_id,
+       product_name,
+       list_price,
+       RANK() OVER (ORDER BY list_price DESC) AS price_rank
+FROM oe.products;
+
+```
+
+### DENSE_RANK
+
+Similar al anterior, pero no saltará rangos. Esto significa que los productos con el mismo precio recibirán el mismo rango y el siguiente será el siguiente número secuencial
+
+```{plsql}
+
+SELECT product_id,
+       product_name,
+       list_price,
+       DENSE_RANK() OVER (ORDER BY list_price DESC) AS dense_price_rank
+FROM oe.products;
+
+```
+
+### NTILE(n)
+
+Esta función divide el conjunto de resultados en n grupos de igual tamaño y asigna un número de grupo a cada fila.
+
+```{plsql}
+
+SELECT 
+    product_id,
+    product_name,
+    list_price,
+    NTILE(4) OVER (ORDER BY list_price DESC) AS price_quartile
+FROM 
+    oe.products;
+
+```
+
+### LEAD
+
+Este ejemplo utiliza LEAD() para obtener el precio del siguiente producto en la lista ordenada por precio.
+
+```{plsql}
+SELECT product_id,
+       product_name,
+       list_price,
+       LEAD(list_price) OVER (ORDER BY list_price) AS next_product_price
+FROM oe.products;
+
+```
+
+### LAG
+
+Aquí, LAG() se utiliza para acceder al precio del producto anterior en la lista ordenada por precio.
+
+```{plsql}
+SELECT product_id,
+       product_name,
+       list_price,
+       LAG(list_price) OVER (ORDER BY list_price) AS previous_product_price
+FROM oe.products;
+
+
+```
+
+
+
+### FIRST_VALUE
+
+Esta función devuelve el primer valor en un conjunto de resultados dentro de la ventana definida.
+
+
+```{plsql}
+
+SELECT 
+    order_id,
+    customer_id,
+    order_date,
+    FIRST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date) AS first_order_date
+FROM 
+    oe.orders;
+
+
+```
+
+### LAST_VALUE
+
+Similar a FIRST_VALUE(), pero devuelve el último valor en el conjunto de resultados.
+
+```{plsql}
+SELECT 
+    order_id,
+    customer_id,
+    order_date,
+    LAST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date 
+                                   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_order_date
+FROM 
+    oe.orders;
+
+
+```
+
+### CUME_DIST
+
+Esta función calcula la distribución acumulativa de un valor dentro de un grupo.
+
+```{plsql}
+SELECT 
+    product_id,
+    product_name,
+    list_price,
+    CUME_DIST() OVER (ORDER BY list_price DESC) AS price_cume_dist
+FROM 
+    oe.products;
+
+```
+
+### PERCENT_RANK
+
+```{plsql}
+SELECT 
+    product_id,
+    product_name,
+    list_price,
+    PERCENT_RANK() OVER (ORDER BY list_price) AS price_percent_rank
+FROM 
+    oe.products;
+
+```
+
+### ROW_NUMBER() con condiciones
+
+Puedes usar ROW_NUMBER() para asignar números de fila en función de condiciones específicas.
+
+```{plsql}
+
+WITH RankedOrders AS (
+    SELECT 
+        order_id,
+        customer_id,
+        order_date,
+        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC) AS row_num
+    FROM 
+        oe.orders
+)
+SELECT 
+    order_id,
+    customer_id,
+    order_date
+FROM 
+    RankedOrders
+WHERE 
+    row_num = 1;  -- Muestra solo el último pedido de cada cliente
+
+
+```
+
+
+
+# Pivot {.card-2}
+
+En Oracle, la función **PIVOT** se utiliza para realizar consultas pivotales, que transforman filas de datos en columnas. 
+
+
+
+```         
+  SELECT * FROM (subquery)
+  PIVOT( SUM | COUNT | MIN | MAX,|AVG |STDDEV(colum)
+  FOR colum IN('V1','V2','V3') AS 
+  )
+  
+  ORDER BY 
+```
+
+Este ejemplo pivotará los precios de productos por categoría, mostrando el precio más alto para cada categoría.
+
+
+```{plsql}
+
+SELECT *
+FROM (
+    SELECT 
+        p.category_id,
+        p.product_name,
+        p.list_price
+    FROM 
+        oe.products p
+)
+PIVOT (
+    MAX(list_price) 
+    FOR product_name IN ('Product A' AS "Product_A", 
+                         'Product B' AS "Product_B", 
+                         'Product C' AS "Product_C")
+);
+
+```
+
+
+Supongamos que queremos ver las ventas totales de cada producto para cada mes. Utilizaremos las tablas de oe.order_items y oe.orders.
+
+
+```{}
+SELECT *
+FROM (
+    SELECT 
+        p.product_name,
+        TO_CHAR(o.order_date, 'YYYY-MM') AS order_month,
+        oi.quantity * p.list_price AS total_sales
+    FROM 
+        oe.order_items oi
+    JOIN 
+        oe.orders o ON oi.order_id = o.order_id
+    JOIN 
+        oe.products p ON oi.product_id = p.product_id
+)
+PIVOT (
+    SUM(total_sales) 
+    FOR order_month IN ('2023-01' AS "January", 
+                        '2023-02' AS "February", 
+                        '2023-03' AS "March")
+);
+
+```
+
+
+
+# Consultas con parametros usanso tabla dual {.card-2}
+
+La tabla DUAL en Oracle es una tabla especial que siempre contiene exactamente una fila y una columna. Se utiliza comúnmente para realizar selecciones de datos que no requieren una tabla real, especialmente para ejecutar expresiones y funciones.
+
+En tabla DUAL podemos establecer valores que funcionen como parámetros en otras consultas. Esto es especialmente útil cuando deseas definir constantes o configuraciones temporales que luego serán utilizadas en consultas más complejas.
+
+**Ejemplo: Filtrar Ventas hasta una Fecha de Corte**
+
+Fecha de Corte: Usamos un CTE llamado FechaCorte para definir la fecha de corte, que es el 30 de septiembre de 2024 en este caso.
+
+```{plsql}
+
+  WITH FechaCorte AS (
+      SELECT 
+          TO_DATE('2024-09-30', 'YYYY-MM-DD') AS fecha_corte
+      FROM dual
+  )
+  SELECT 
+      p.product_name,
+      SUM(oi.quantity * p.list_price) AS total_ventas,
+      fc.fecha_corte
+  FROM 
+      oe.order_items oi
+  JOIN  oe.products p ON oi.product_id = p.product_id
+  JOIN  oe.orders o ON oi.order_id = o.order_id
+  JOIN FechaCorte fc ON o.order_date <= fc.fecha_corte
+  GROUP BY 
+      p.product_name, fc.fecha_corte;
+
+
+```
+
+
+
+
+**Ventajas de Usar DUAL para Parámetros**
+
+
+- **Simplicidad**: Permite definir valores constantes de manera sencilla sin necesidad de crear tablas adicionales.
+
+- **Flexibilidad**: Puedes cambiar los valores de los parámetros fácilmente al modificar la consulta que usa DUAL.
+
+# JSON en Oracle {.tabset .tabset-fade .tabset-pills .card-2}
+
+Oracle Database incluye un amplio soporte para el manejo de datos JSON (JavaScript Object Notation), permitiendo almacenar, consultar y manipular datos en formato JSON dentro de las columnas de tablas. 
+
+Oracle Database ha soportado JSON (JavaScript Object Notation) desde la versión **Oracle 12c (Release 1)**, que fue lanzada en 2013. Esta versión introdujo varias características para trabajar con datos JSON de manera nativa, incluyendo:
+
+- **Almacenamiento**: Se permite almacenar documentos JSON en columnas de tipo *VARCHAR2*, *CLOB*, o *BLOB.*
+- **Validación**: Oracle valida que los datos almacenados en esas columnas sean JSON válidos.
+- **Funciones JSON**: Se introdujeron varias funciones específicas para manipular y consultar datos JSON, como:b**JSON_VALUE**() para extraer valores específicos.
+**JSON_QUERY**() para obtener subdocumentos.
+**JSON_TABLE**() para transformar JSON en filas y columnas relacionales.
+ **JSON_EXISTS**() para verificar la existencia de elementos JSON en un documento.
+
+
+## Almacenamiento de JSON en Oracle
+
+Puedes almacenar datos JSON en Oracle usando una columna de tipo *VARCHAR2*, *CLOB* o *BLOB.* A partir de Oracle 12c, también puedes usar el tipo de datos específico *JSON.*
+
+
+**Creación de Tabla con JSONsql**
+
+```{plsql}
+CREATE TABLE empleados (
+    id           NUMBER PRIMARY KEY,
+    datos_json   CLOB CHECK (datos_json IS JSON)  -- Almacenamos JSON en esta columna
+);
+
+```
+
+## Insertar JSON en una Tabla
+
+Para insertar datos JSON en la tabla, simplemente puedes hacerlo como si fuera texto.
+
+```{plsql}
+
+INSERT INTO empleados (id, datos_json)
+VALUES (1, '{
+    "nombre": "Juan",
+    "apellido": "Perez",
+    "edad": 30,
+    "direccion": {
+        "calle": "Calle Falsa 123",
+        "ciudad": "Ciudad Ejemplo"
+    },
+    "departamento": "Ventas"
+}');
+
+```
+
+## Consultar JSON en Oracle
+
+Puedes usar varias funciones específicas de JSON para consultar y manipular datos dentro de un campo JSON en Oracle.
+
+**Para extraer un valor específico de un documento JSON, puedes usar la función JSON_VALUE().**
+```{plsql}
+SELECT JSON_VALUE(datos_json, '$.nombre') AS nombre_empleado
+FROM empleados
+WHERE id = 1;
+
+```
+$.nombre es una expresión JSONPath que indica que quieres obtener el valor de la clave nombre.
+
+**Extraer Múltiples Valores JSON**
+
+Si deseas extraer múltiples valores, puedes usar JSON_QUERY() para obtener subdocumentos o matrices.
+
+```{plsql}
+SELECT JSON_VALUE(datos_json, '$.nombre') AS nombre_empleado,
+       JSON_VALUE(datos_json, '$.direccion.ciudad') AS ciudad
+FROM empleados
+WHERE id = 1;
+
+```
+
+## Modificar JSON en Oracle
+
+Puedes actualizar partes de un documento JSON sin sobrescribir todo el documento usando la función **JSON_MERGE_PATCH**().
+
+```{plsql}
+
+UPDATE empleados
+SET datos_json = JSON_MERGE_PATCH(datos_json, '{"edad": 31}')
+WHERE id = 1;
+
+```
+
+Este comando actualizará solo el campo edad del documento JSON, dejándolo con un nuevo valor sin afectar los otros campos.
+
+##  Buscar en JSON 
+
+Oracle permite indexar campos JSON para hacer búsquedas más eficientes. También puedes realizar consultas para encontrar filas que contengan ciertos valores dentro de un documento JSON.
+
+```{plsql}
+
+SELECT id, JSON_VALUE(datos_json, '$.nombre') AS nombre_empleado
+FROM empleados
+WHERE JSON_EXISTS(datos_json, '$.direccion.ciudad?(@ == "Ciudad Ejemplo")');
+
+
+```
+En este ejemplo, **JSON_EXISTS**() comprueba si el campo direccion.ciudad contiene el valor "Ciudad Ejemplo".
+
+##  Indexar Columnas JSON
+Para mejorar el rendimiento de las consultas JSON, puedes crear un índice en las columnas JSON.
+
+```{plsql}
+CREATE INDEX idx_empleados_json ON empleados (json_value(datos_json, '$.nombre'));
+
+```
+
+## Generar JSON desde Resultados de Consultas
+
+Oracle permite convertir resultados de consultas SQL en formato JSON utilizando la función **JSON_OBJECT**().
+
+```{plsql}
+
+SELECT JSON_OBJECT(
+    'id' VALUE id,
+    'nombre' VALUE JSON_VALUE(datos_json, '$.nombre'),
+    'ciudad' VALUE JSON_VALUE(datos_json, '$.direccion.ciudad')
+) AS empleado_json
+FROM empleados;
+
+
+```
+
+
+
+# Referencias
+
+<https://www.juntadeandalucia.es/servicios/madeja/contenido/recurso/107>
+
+<http://apuntesduoc.pbworks.com/w/file/fetch/54222708/040628_PLSQL_Basico>
