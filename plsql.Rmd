@@ -12,6 +12,14 @@ output:
     df_print : paged #impresion de tablas
     code_folding: show # hide,show msotrar o ocultar codigo
     css: C:/Users/jcardenash/Documents/R/ejercicios/css/css_rmarkdown.css
+    
+    pandoc_args: [
+      "--metadata=title: Oracle PLSQL",
+      "--metadata=description: Apuntes personales de PLSQL en proceso.",
+      "--metadata=image: https://raw.githubusercontent.com/jcardenashh/img/refs/heads/main/plsql2.webp",
+      "--metadata=url: https://jcardenashh.github.io/notas/plsql.html"
+    ]
+    
 editor_options: 
   markdown: 
     wrap: 72
