@@ -11,7 +11,7 @@ output:
     number_sections : true # Numero secciones
     df_print : paged #impresion de tablas
     code_folding: show # hide,show msotrar o ocultar codigo
-    css: C:/Users/jcardenash/Documents/R/ejercicios/css/css_rmarkdown.css
+    css: https://jcardenashh.github.io/r_publico/css/css_rmarkdown.css
     
     pandoc_args: [
       "--metadata=title: Oracle PLSQL",
@@ -27,7 +27,8 @@ editor_options:
 
 ![](https://raw.githubusercontent.com/jcardenashh/img/refs/heads/main/plsql2.webp){height='500px'}
 
-# Prefacio
+
+# Prefacio {.card-2}
 
 
 
@@ -168,21 +169,95 @@ PL/SQL ofrece una variedad de tipos de datos numéricos para almacenar valores e
 
 ## Tipos Booleanos
 
+En PL/SQL, el tipo de dato booleano se utiliza para representar valores de verdad (TRUE, FALSE y NULL).
+
+**Operadores Booleanos:**
+PL/SQL proporciona varios operadores que se pueden utilizar con valores booleanos:
+
+- **AND**: Devuelve TRUE si ambos operandos son verdaderos.
+- **OR**: Devuelve TRUE si al menos uno de los operandos es verdadero.
+- **NOT**: Devuelve TRUE si el operando es falso y viceversa
+
+```{plsql}
+DECLARE
+    v_condicion BOOLEAN := TRUE;
+BEGIN
+    IF v_condicion THEN
+        DBMS_OUTPUT.PUT_LINE('La condición es verdadera.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('La condición es falsa.');
+    END IF;
+END;
+
+```
+
+
+
 ## Tipos de fecha y hora
 
--   **DATE:**
+  Estos tipos permiten trabajar con fechas y horas.
+  
+-   **DATE:**  Almacena una fecha con información de año, mes, día, hora, minuto y segundo. *'2024-09-30 14:45:20'* El rango de fechas admitido es desde 4712 a.C. hasta 9999 d.C
+
 
 -   **TIME:**
 
--   **TIMESTAMP:**
+-   **TIMESTAMP:** Almacena una fecha con mayor precisión que DATE, incluyendo fracciones de segundo. *'2024-09-30 14:45:20.123456'* Este tipo es útil cuando se necesita registrar la fecha con mayor precisión en tiempo.
 
--   **TIMESTAMP WITH TIME ZONE:**
+-   **TIMESTAMP WITH TIME ZONE:** Almacena una fecha, hora y una zona horaria *'2024-09-30 14:45:20.123456 -05:00'*
 
--   **TIMESTAMP WITH LOCAL ZONE:**
+-   **TIMESTAMP WITH LOCAL ZONE:** Convierte y almacena la fecha y hora basándose en la zona horaria de la base de datos. Internamente no almacena la zona horaria, pero la ajusta automáticamente al mostrarse según la zona horaria del usuario.
 
--   **INTERVAL YEAR TO MOTH:**
+### INTERVAL
 
--   **INTERVAL DAY TO SECOND:**
+Los tipos INTERVAL se utilizan para representar y manejar diferencias entre dos fechas o tiempos.
+
+-   **INTERVAL YEAR TO MOTH:** Representa una diferencia en términos de años y meses. **INTERVAL '2-3' YEAR TO MONTH** representa 2 años y 3 meses.
+
+-   **INTERVAL DAY TO SECOND:** Representa una diferencia en términos de días, horas, minutos, segundos y fracciones de segundo. **INTERVAL '5 12:30:45.678' DAY TO SECOND** representa 5 días, 12 horas, 30 minutos, 45 segundos y 678 milisegundos.
+
+### Funciones comunes para manejar tipos de fecha y hora
+
+- **SYSDATE** : Retorna la fecha y hora actuales del sistema. *SELECT SYSDATE FROM dual;*
+- **SYSTIMESTAMP**:Retorna la fecha y hora actual con fracciones de segundo *SELECT SYSTIMESTAMP FROM dual;*
+- **EXTRACT** : Extrae partes de una fecha o timestamp (como el año, mes, día, etc.). *SELECT EXTRACT(YEAR FROM SYSDATE) FROM dual;*
+- **ADD_MONTHS**:Añade un número específico de meses a una fecha. *SELECT ADD_MONTHS(SYSDATE, 2) FROM dual;*
+- **TO_DATE y TO_TIMESTAMP** Convierte cadenas a tipos DATE o TIMESTAMP. *SELECT TO_DATE('2024-09-30', 'YYYY-MM-DD') FROM dual;*
+
+### Formatos de fecha
+En PL/SQL, los formatos de fecha se utilizan principalmente para convertir cadenas a tipos de datos de fecha (DATE y TIMESTAMP), y viceversa, usando funciones como TO_DATE, TO_CHAR, y TO_TIMESTAMP. A continuación, te detallo los formatos más comunes que puedes usar para manejar fechas y horas en PL/SQL.
+
+- *SELECT TO_DATE('30-09-2024', 'DD-MM-YYYY') FROM dual;* Esto convierte la cadena '30-09-2024' a una fecha.
+- *SELECT TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS') FROM dual;* Convertir una fecha a una cadena con TO_CHAR
+
+
+
+**Formatos de Fecha y Hora Comunes**
+
+| Formato     | Descripción                                    | Ejemplo            |
+|-------------|------------------------------------------------|--------------------|
+| `YYYY`      | Año con cuatro dígitos                         | `2024`             |
+| `RRRR`      | Convierte años de dos o cuatro dígitos, adaptándose al siglo adecuado | `24` convierte en `2024`, `95` en `1995` |
+| `YY`        | Año con dos dígitos                            | `24`               |
+| `MM`        | Mes con dos dígitos (01 a 12)                  | `09`               |
+| `MON`       | Mes abreviado en inglés (tres letras)          | `SEP`              |
+| `MONTH`     | Mes completo en inglés                         | `SEPTEMBER`        |
+| `DD`        | Día del mes (01 a 31)                          | `30`               |
+| `D`         | Día de la semana (1=Domingo, 7=Sábado)         | `5` (Jueves)       |
+| `DY`        | Abreviatura del día de la semana en inglés     | `THU` (Thursday)   |
+| `DAY`       | Nombre completo del día de la semana           | `THURSDAY`         |
+| `HH` o `HH12` | Hora (formato de 12 horas, 01 a 12)          | `02`               |
+| `HH24`      | Hora (formato de 24 horas, 00 a 23)            | `14`               |
+| `MI`        | Minutos (00 a 59)                              | `45`               |
+| `SS`        | Segundos (00 a 59)                             | `20`               |
+| `FF`        | Fracciones de segundo (hasta 9 dígitos)        | `123456`           |
+| `AM` / `PM` | Indicador de AM o PM (formato de 12 horas)     | `PM`               |
+| `TZD`       | Zona horaria (abreviatura)                     | `PST` (Pacific)    |
+| `TZH`       | Hora de la zona horaria con signo              | `+05`              |
+| `TZM`       | Minutos de la zona horaria                     | `30`               |
+
+El formato RRRR es útil cuando trabajas con datos históricos o antiguos donde los años se ingresan con dos dígitos, ya que evita errores en la interpretación del siglo.
+
 
 ## Tipos Raw
 
